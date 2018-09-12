@@ -24,6 +24,8 @@ Para ejecutar el script
 
  python3 guncon3-linux-pyusb
 
-# TODO
-El calibrado ahora mismo es manual, cambiando los valores en el script abs_x y abs_y
-Solo se ha probado su funcionamiento con jstest-sdl (https://github.com/meleu/jstest-sdl)
+El calibrado se puede realizar con el jstest-gtk
+
+
+#TODO
+Esto es una version alpha, falta probar bien
