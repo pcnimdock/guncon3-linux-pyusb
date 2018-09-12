@@ -19,6 +19,7 @@ con el siguiente contenido
 
  SUBSYSTEM=="usb", ATTR{idVendor}=="0b9a", ATTR{idProduct}=="0800", MODE="0666", GROUP="plugdev", TAG+="uaccess", TAG+="udev-acl", SYMLINK+="guncon3%n"
  KERNEL=="hidraw*", ATTRS{idVendor}=="0b9a", ATTRS{idProduct}=="0800",  MODE="0666", GROUP="plugdev", TAG+="uaccess", TAG+="udev-acl"
+ 
 Para ejecutar el script
 
  python3 guncon3-linux-pyusb
