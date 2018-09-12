@@ -26,4 +26,4 @@ Para ejecutar el script
 
 # TODO
 El calibrado ahora mismo es manual, cambiando los valores en el script abs_x y abs_y
-Solo se ha probado su funcionamiento con sdl-jstest (https://github.com/meleu/jstest-sdl)
+Solo se ha probado su funcionamiento con jstest-sdl (https://github.com/meleu/jstest-sdl)
