@@ -70,7 +70,7 @@ def obtain_event(dec):
     if val_y > 32767:
         abs_y= (-1)*(65535-val_y)
     abs_x = abs_x*2+3640
-    abs_y = abs_y*5+43043
+    abs_y = (-1) * (abs_y*5+43043)
     
     print("abs_x:" + hex(dec[4]*256+dec[3]) + " abs_y:" + hex(dec[6]*256+dec[5]) + " abs_z:" + hex(dec[8]*256+dec[7]))
     print("fuera de rango de referencia de la pantalla: " + str((0, 1)[dec[1] & 0x08>0]))
