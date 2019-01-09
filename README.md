@@ -61,6 +61,8 @@ sudo evdev-joystick --evdev /ruta --axis numero_de_eje -m valor_minimo -M valor_
 
 Por ejemplo, mi calibración es la siguiente:
 
+sudo evdev-joystick --evdev /dev/input/event11 --axis 0 -m -26460 -M 25459
+
 sudo evdev-joystick --evdev /dev/input/event11 --axis 1 -m 2311 -M 30440
 
 sudo evdev-joystick --evdev /dev/input/event11 --axis 2 -m 0 -M 255
