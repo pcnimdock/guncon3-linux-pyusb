@@ -88,6 +88,6 @@ Con esto creamos el archivo de configuración mame.ini
 Dentro del archivo hay una opción que es "joystick_deadzone" que por defecto está a 0.3. Aquí hay que colocar 0
 
 
-*Para calibrar con gnome-video-arcade yo he capturado la pantalla en un juego y como perímetro he usado el contenido de la imagen
-
+*Para calibrar con gnome-video-arcade yo he capturado la pantalla en un juego y como perímetro he usado el contenido de la imagen.
+**La GunCon3 tiene un bit que se activa cuando sale del rango de los leds ir (y se enciende el led trasero). Esto está aplicado al botón 9 que podría usarse como botón de recarga en algún juego.
 
