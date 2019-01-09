@@ -1,8 +1,10 @@
 import sys
 import usb.util
 import libevdev
+import time
 from libevdev import InputEvent
 from libevdev import InputAbsInfo
+import ctypes
 
 CONS_ABS1 = 0x0b
 CONS_ABS2 = 0x0c
@@ -30,8 +32,8 @@ KEY_TABLE = bytes([
 def open_dev():
     d = libevdev.Device()
     d.name = '4-Axis,9-Button'
-    ai = InputAbsInfo(minimum=-32767, maximum=32768, resolution=1)
-    ai2 = InputAbsInfo(minimum=0, maximum=255, resolution=1)
+    ai = InputAbsInfo(minimum=-32766, maximum=32767, resolution=1)
+    ai2 = InputAbsInfo(minimum=-32767, maximum=32767, resolution=1)
     d.enable(libevdev.EV_ABS.ABS_X, ai)
     d.enable(libevdev.EV_ABS.ABS_Y, ai)
     d.enable(libevdev.EV_ABS.ABS_RX, ai2)
@@ -47,8 +49,25 @@ def open_dev():
     d.enable(libevdev.EV_KEY.BTN_5)
     d.enable(libevdev.EV_KEY.BTN_6)
     d.enable(libevdev.EV_KEY.BTN_7)
+    d.enable(libevdev.EV_KEY.BTN_8)
     uinput = d.create_uinput_device()
     return uinput
+
+def open_mouse(x_min,x_max,y_min,y_max):
+    d = libevdev.Device()
+    d.name = 'Guncon3_Touch'
+    ai = InputAbsInfo(minimum=x_min, maximum=x_max, resolution=1)
+    ai2 = InputAbsInfo(minimum=y_min, maximum=y_max, resolution=1)
+    ai3 = InputAbsInfo(minimum=0, maximum=255, resolution=1)
+    d.enable(libevdev.EV_ABS.ABS_X, ai)
+    d.enable(libevdev.EV_ABS.ABS_Y, ai2)
+    d.enable(libevdec.EV_ABS.ABS_PRESSURE,ai3)
+    d.enable(libevdev.EV_KEY.BTN_TOUCH)
+    d.enable(libevdev.EV_KEY.BTN_RIGHT)
+    d.enable(libevdev.EV_KEY.BTN_TOOL_FINGER)
+    uinput = d.create_uinput_device()
+    return uinput
+
 
 abs_x_ant = int(0)
 abs_y_ant = int(0)
@@ -56,6 +75,11 @@ abs_y_ant = int(0)
 def obtain_event(dec):
     "Obtener los eventos"
     #abs_x el punto medio es 0, el valor es signed, (-) izquierda del centro, (+) derecha del centro
+    global abs_x_final
+    global abs_y_final
+    global btn_trigger_final
+    global btn_0_final
+
     abs_x=dec[4] * 256 + dec[3]
     #abs_y el punto medio es 0, el valor es signed, (-) abajo del centro, (+) arriba del centro
     abs_y=dec[6] * 256 + data[5]
@@ -67,14 +91,19 @@ def obtain_event(dec):
     val_y = int(abs_y)
     if val_x > 32767:
         abs_x= (-1)*(65535-val_x)
-    if val_y > 32767:
-        abs_y= (-1)*(65535-val_y)
-    abs_x = abs_x*2+3640
-    abs_y = (-1) * (abs_y*5+43043)
-    
-    print("abs_x:" + hex(dec[4]*256+dec[3]) + " abs_y:" + hex(dec[6]*256+dec[5]) + " abs_z:" + hex(dec[8]*256+dec[7]))
-    print("fuera de rango de referencia de la pantalla: " + str((0, 1)[dec[1] & 0x08>0]))
-    print("Sólo hay una referencia led: " + str((0, 1)[dec[1] & 0x10>0]))    
+    #if val_y > 32767:
+    #    abs_y= (1)*(65535-val_y)
+    #abs_x = abs_x*2+3640
+    #abs_y = (-1) * (abs_y*5+43043)
+    number = abs_x & 0xFFFF
+    abs_x = ctypes.c_int16(number).value
+    number = abs_y & 0xFFFF
+    abs_y = ctypes.c_int16(number).value
+    #invertir ejes
+    abs_y = (-1) * abs_y
+    #print("abs_x:" + hex(dec[4]*256+dec[3]) + " abs_y:" + hex(dec[6]*256+dec[5]) + " abs_z:" + hex(dec[8]*256+dec[7]))
+    #print("fuera de rango de referencia de la pantalla: " + str((0, 1)[dec[1] & 0x08>0]))
+    #print("Sólo hay una referencia led: " + str((0, 1)[dec[1] & 0x10>0]))    
     abs_rx=dec[11]
     abs_ry=dec[12]
     abs_hat0x=dec[9]
@@ -90,6 +119,10 @@ def obtain_event(dec):
     btn_7= (0, 1)[dec[2] & 0x40>0]
     only_one_led_reference = (0, 1)[dec[1] & 0x10>0]
     out_of_reference_range = (0, 1)[dec[1] & 0x08>0]
+    abs_x_final = abs_x
+    abs_y_final = abs_y
+    btn_trigger_final = btn_trigger
+    btn_0_final = (0, 1)[dec[1] & 0x08>0]
     event = [libevdev.InputEvent(libevdev.EV_ABS.ABS_X, abs_x),
              libevdev.InputEvent(libevdev.EV_ABS.ABS_Y, abs_y),
              libevdev.InputEvent(libevdev.EV_ABS.ABS_RX, abs_rx),
@@ -105,6 +138,7 @@ def obtain_event(dec):
              libevdev.InputEvent(libevdev.EV_KEY.BTN_5, btn_5),
              libevdev.InputEvent(libevdev.EV_KEY.BTN_6, btn_6),
              libevdev.InputEvent(libevdev.EV_KEY.BTN_7, btn_7),
+             libevdev.InputEvent(libevdev.EV_KEY.BTN_8, btn_0_final),
              libevdev.InputEvent(libevdev.EV_SYN.SYN_REPORT, 0)]
     return event
 
@@ -175,7 +209,7 @@ def guncon3_decode(data, key):
 if __name__ == '__main__':
     # find our device
     dev = usb.core.find(idVendor=0x0b9a, idProduct=0x0800)
-
+    x_min_cal = x_max_cal = y_min_cal = y_max_cal = 0
     # was it found?
     if dev is None:
         raise ValueError('Device not found')
@@ -236,6 +270,7 @@ if __name__ == '__main__':
             data = dev.read(epin.bEndpointAddress, epin.wMaxPacketSize, timeout=100)
             #print("data:")
             #print(data)
+            #calibracion
             data_byte = bytearray()
             data_byte.append(data[0])
             data_byte.append(data[1])
@@ -253,9 +288,14 @@ if __name__ == '__main__':
             data_byte.append(data[13])
             data_byte.append(data[14])
             dec = guncon3_decode(data_byte, key)
-            print(dec.hex())
+            #print(dec.hex())
             botones = obtain_event(dec)
             uinput.send_events(botones)
+            print("X:" + str(abs_x_final))
+            print("Y:" + str(abs_y_final))
+            print("PUM!:" + str(btn_trigger_final))
+            print("RECARGA:" + str(btn_0_final))
+            
 
         except usb.core.USBError as e:
             if e.errno != 110:
