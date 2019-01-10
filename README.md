@@ -8,6 +8,9 @@ python-uinput
 pyusb
 libevdev
 
+#instalacion
+
+pip3 install python-uinput pyusb libevdev
 # Uso
 Hay que dar permisos a la lectura de uinput con
 sudo setfacl -m user:usuario:rw /dev/uinput
